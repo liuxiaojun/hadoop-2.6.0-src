@@ -28,6 +28,11 @@ import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
 import org.apache.hadoop.hdfs.server.protocol.BlockRecoveryCommand.RecoveringBlock;
 import org.apache.hadoop.security.KerberosInfo;
 
+/**********************************************************************
+ * 数据节点与数据节点间的接口，数据节点会通过这个接口和其他数据节点通信。这个节点主要用于数据块的恢复操作，
+ * 以及同步数据节点上存储的数据块副本的信息。
+ **********************************************************************/
+
 /** An inter-datanode protocol for updating generation stamp
  */
 @KerberosInfo(
