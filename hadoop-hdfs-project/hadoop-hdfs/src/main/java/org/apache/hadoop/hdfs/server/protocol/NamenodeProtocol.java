@@ -30,6 +30,10 @@ import org.apache.hadoop.io.retry.Idempotent;
 import org.apache.hadoop.security.KerberosInfo;
 
 /*****************************************************************************
+ * 第二名字节点与名字节点间的接口。由于hadoop2.x 引入了ha机制，检查点操作也不再由第二名字节点来执行了
+ *****************************************************************************/
+
+/*****************************************************************************
  * Protocol that a secondary NameNode uses to communicate with the NameNode.
  * It's used to get part of the name node state
  *****************************************************************************/
