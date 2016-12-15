@@ -59,6 +59,7 @@ import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.KerberosInfo;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenInfo;
+
 /**********************************************************************
  * 定义了客户端与名字节点间的接口，这个接口定义的方法非常多，客户端对文件系统的所有操作都需要通过
  * 这个接口，同时客户端读、写文件等操作也需要先通过这个接口与Namenode协商之后，再进行数据块的读出
