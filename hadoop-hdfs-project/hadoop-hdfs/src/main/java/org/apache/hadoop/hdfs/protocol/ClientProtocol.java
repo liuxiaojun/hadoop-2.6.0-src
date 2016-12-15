@@ -130,13 +130,17 @@ public interface ClientProtocol {
    * @throws UnresolvedLinkException If <code>src</code> contains a symlink
    * @throws IOException If an I/O error occurred
    */
+  
+  /**
+   * 客户端调用此方法获取HDFS文件制定范围内所有数据块的位置信息 
+   */
   @Idempotent
   public LocatedBlocks getBlockLocations(String src,
                                          long offset,
                                          long length) 
       throws AccessControlException, FileNotFoundException,
       UnresolvedLinkException, IOException;
-
+  
   /**
    * Get server default values for a number of configuration params.
    * @return a set of server default configuration values
@@ -194,6 +198,14 @@ public interface ClientProtocol {
    * <p>
    * <em>Note that create with {@link CreateFlag#OVERWRITE} is idempotent.</em>
    */
+  
+  
+  /**
+   * create方法用于HDFS的文件系统目录中创建一个新的空文件，创建的路径由src参数指定。这个空文件创建后对于其他的
+   * 客户端是"可读"的，但是这些客户端不能删除、重命名或者移动这个文件，直到这个文件被关闭或者租约到期。
+   * 客户端写一个新的文件时，会首先调用create方法在文件系统目录中创建一个空文件，然后调用addBlock方法获取存储文件
+   * 数据的数据块位置信息，最后客户端就可以根据位置信息建立数据流管道，向数据节点写入数据了。
+   */
   @AtMostOnce
   public HdfsFileStatus create(String src, FsPermission masked,
       String clientName, EnumSetWritable<CreateFlag> flag,
@@ -228,6 +240,13 @@ public interface ClientProtocol {
    *
    * RuntimeExceptions:
    * @throws UnsupportedOperationException if append is not supported
+   */
+  
+  /**
+   * append方法用于打开一个已有的文件，如果这个文件的最后一个数据块没有写满，则返回这个数据块的位置信息，
+   * 如果这个文件的最后一个数据块正好写满，则创建一个新的数据块并添加到这个文件中，然后返回这个新添加的数据块位置信息。
+   * 客户端追加写一个已有文件时，会先调用append方法获取最后一个可写数据块的位置信息，然后建立数据流管道，并向数据节点写入
+   * 追加的数据。如果客户端将这个数据块写满，与create方法一样，客户端会调用addBlock方法获取新的数据块。
    */
   @AtMostOnce
   public LocatedBlock append(String src, String clientName)
@@ -374,6 +393,15 @@ public interface ClientProtocol {
    * @throws UnresolvedLinkException If <code>src</code> contains a symlink
    * @throws IOException If an I/O error occurred
    */
+  
+  /**
+   * 客户端调用此方法向指定文件添加一个新的数据块，并获取存储这个数据块副本的所有数据节点的位置信息。
+   * 要特别注意的是，调用addBlock方法时还需要传入上一个数据块的引用。Namenode在分配新的数据块时，
+   * 会顺便提交上一个数据块，这里的previous是指上一个数据块的引用。excludeNodes参数则是数据节点的黑名单，
+   * 保存了客户端无法连接的一些数据节点，建议Namenode在分配保存数据块副本的数据节点时不要考虑这些节点。
+   * favoredNodes参数则是客户端希望的保存数据块副本的数据节点的列表。客户端调用addBlock方法获取新的数据块
+   * 的位置信息后，会建立到这些数据节点的数据流管道，并通过数据流管道将数据写入数据节点。
+   */
   @Idempotent
   public LocatedBlock addBlock(String src, String clientName,
       ExtendedBlock previous, DatanodeInfo[] excludeNodes, long fileId, 
@@ -439,6 +467,12 @@ public interface ClientProtocol {
    * @throws SafeModeException create not allowed in safemode
    * @throws UnresolvedLinkException If <code>src</code> contains a symlink 
    * @throws IOException If an I/O error occurred
+   */
+  /**
+   * 客户端在完成了整个文件的写入操作后，会调用complete方法通知namenode。
+   * 这个操作会提交新写入HDFS文件的所有数据块，当这些数据块的副本数量满足系统配置的最小副本系数1时，
+   * complete方法会返回true，这时namenode中文件的状态也会从构建中状态转换为正常状态；否则complete方法
+   * 返回false，客户端需要重复调用complete方法，直到该方法返回true。
    */
   @Idempotent
   public boolean complete(String src, String clientName,
