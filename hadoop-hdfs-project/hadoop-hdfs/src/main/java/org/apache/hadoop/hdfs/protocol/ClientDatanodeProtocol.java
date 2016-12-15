@@ -32,6 +32,11 @@ import org.apache.hadoop.security.KerberosInfo;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenInfo;
 
+/**********************************************************************
+ * 客户端与数据节点间的接口。本类中定义的方法主要是用于客户端获取数据节点信息时调用，而真正的
+ * 数据读写交互则是通过流式接口进行的。
+ **********************************************************************/
+
 /** An client-datanode protocol for block recovery
  */
 @InterfaceAudience.Private
