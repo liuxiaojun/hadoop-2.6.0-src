@@ -48,6 +48,11 @@ import com.google.common.collect.ImmutableList;
 /**
  * Directory INode class.
  */
+
+/**
+ * INodeDirectory抽象了HDFS文件系统中的目录，目录是文件系统中的一个虚拟容器，里面保存了一组文件和
+ * 其他一些目录。在INodeDirectory的实现中，添加了成员变量children,用来保存目录中所有子目录的INode对象。
+ */
 public class INodeDirectory extends INodeWithAdditionalFields
     implements INodeDirectoryAttributes {
 

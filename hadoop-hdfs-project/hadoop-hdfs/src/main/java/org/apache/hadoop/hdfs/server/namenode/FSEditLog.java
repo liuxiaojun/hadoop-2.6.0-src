@@ -106,6 +106,19 @@ import com.google.common.collect.Lists;
  * FSEditLog maintains a log of the namespace modifications.
  * 
  */
+
+/**
+ * 在NameNode中，命名空间是被全部缓存在内存中，一旦NameNode重启或宕机，内存中的所有数据都将会全部丢失，
+ * 所以必须要有一种机制能够将整个命名空间持久化保存，并且能在重启时重建命名空间。
+ * 目前NameNode的实现是将命名空间信息记录在一个叫做fsimage的二进制文件账，fsimage将文件系统目录树中的
+ * 每个文件或者目录的信息保存为一条记录。NameNode重启时，会读取这个fsimage文件来重构命名空间。但是这个文件
+ * 始终是磁盘上的一个文件，不可能实时与内存中的数据结构保持同步，并且fsimage一般很大，如果所有的更新操作都写入
+ * 到此文件中，就会导致namenode非常慢，所以hdfs每过一段时间才更新一次fsimage文件。
+ * 那么问题来了，在一个新的fsimage和上一个fsimage文件中进行的namenode操作保存在哪里那，hdfs将这些操作记录在
+ * editlog文件中。hdfs会定期将editlog与fsimage合并，保证fsimage和内存的数据一致。
+ */
+
+
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
 public class FSEditLog implements LogsPurgeable {

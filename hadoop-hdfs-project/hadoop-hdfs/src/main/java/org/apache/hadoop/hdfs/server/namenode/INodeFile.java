@@ -110,9 +110,9 @@ public class INodeFile extends INodeWithAdditionalFields
     }
   }
 
-  private long header = 0L;
+  private long header = 0L; //文件头信息
 
-  private BlockInfo[] blocks;
+  private BlockInfo[] blocks; //文件数据块信息
 
   INodeFile(long id, byte[] name, PermissionStatus permissions, long mtime,
             long atime, BlockInfo[] blklist, short replication,

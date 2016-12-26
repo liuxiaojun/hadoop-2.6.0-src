@@ -59,6 +59,12 @@ import com.google.common.base.Preconditions;
  * Note 2: getParent() always returns the parent in the current state, e.g.
  *         inode(id=1000,name=bar).getParent() returns /xyz but not /abc.
  */
+
+/**
+ * 当HDFS文件/目录处于某个快照中，并且这个文件/目录被重命名或者移动到其他路径时，该文件/目录就会存在
+ * 多条访问路径。INodeReference 就是为了解决此问题的。
+ */
+
 public abstract class INodeReference extends INode {
   /**
    * Try to remove the given reference and then return the reference count.
