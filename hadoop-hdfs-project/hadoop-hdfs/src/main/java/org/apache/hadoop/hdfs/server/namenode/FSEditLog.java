@@ -247,6 +247,9 @@ public class FSEditLog implements LogsPurgeable {
     this.sharedEditsDirs = FSNamesystem.getSharedEditsDirs(conf);
   }
   
+  /**
+   * 将FSEditLog从UNINITIALIZED状态转换为BETWEEN_LOG_SEGMENTS状态
+   */
   public synchronized void initJournalsForWrite() {
     Preconditions.checkState(state == State.UNINITIALIZED ||
         state == State.CLOSED, "Unexpected state: %s", state);
@@ -255,6 +258,9 @@ public class FSEditLog implements LogsPurgeable {
     state = State.BETWEEN_LOG_SEGMENTS;
   }
   
+  /**
+   * 在HA的情况下。调用这个方法将FSEditLog从UNINITIALIZED状态转换为OPEN_FOR_READING状态
+   */
   public synchronized void initSharedJournalsForRead() {
     if (state == State.OPEN_FOR_READING) {
       LOG.warn("Initializing shared journals for READ, already open for READ",
@@ -274,8 +280,11 @@ public class FSEditLog implements LogsPurgeable {
         DFSConfigKeys.DFS_NAMENODE_EDITS_DIR_MINIMUM_DEFAULT);
 
     synchronized(journalSetLock) {
+      
+      // 初始化journalSet集合，存放存储路径对应的所有JournalManager对象
       journalSet = new JournalSet(minimumRedundantJournals);
-
+      
+      //根据传入的URL获取对应的JournalManager对象
       for (URI u : dirs) {
         boolean required = FSNamesystem.getRequiredNamespaceEditsDirs(conf)
             .contains(u);
@@ -309,13 +318,20 @@ public class FSEditLog implements LogsPurgeable {
    * Initialize the output stream for logging, opening the first
    * log segment.
    */
+  
+  /**
+   * 初始化editlog文件的输出流，并且打开第一个日志段落（logsagment）。在非HA状态下，调用这个方法会完成BETWEEN_LOG_SEGMENTS到
+   * IN_SEGMENT状态的转换。
+   */
   synchronized void openForWrite() throws IOException {
     Preconditions.checkState(state == State.BETWEEN_LOG_SEGMENTS,
         "Bad state: %s", state);
 
+    // 返回最后一个写入log的transactionId+1 作为本次操作的transactionId
     long segmentTxId = getLastWrittenTxId() + 1;
     // Safety check: we should never start a segment if there are
     // newer txids readable.
+    // 这里判断，有没有包含这个新的segmentTxId的editlog文件，如果有抛出异常
     List<EditLogInputStream> streams = new ArrayList<EditLogInputStream>();
     journalSet.selectInputStreams(streams, segmentTxId, true);
     if (!streams.isEmpty()) {
