@@ -35,12 +35,19 @@ import com.google.common.base.Preconditions;
  * to progress concurrently to flushes without allocating new buffers each
  * time.
  */
+
+/**
+ * 数据在写入editlog文件前，会首先写入到输出流的缓冲区中。EditLogFileOutputStream的缓冲区用到了一个
+ * 比较特殊的结构---- EditDoubleBuffer，本节就介绍EditDoubleBuffer的实现。
+ * EditDoubleBuffer中包括两块缓存，数据会先被写入到一块缓存中，而另外一块缓存可能正在进行磁盘的同步操作。
+ * 这样的设计会保证输出流进行磁盘同步操作的同时，并不影响磁盘的写入操作。
+ */
 @InterfaceAudience.Private
 public class EditsDoubleBuffer {
 
-  private TxnBuffer bufCurrent; // current buffer for writing
-  private TxnBuffer bufReady; // buffer ready for flushing
-  private final int initBufferSize;
+  private TxnBuffer bufCurrent; // current buffer for writing  正在写入的缓冲区
+  private TxnBuffer bufReady; // buffer ready for flushing 准备好同步的缓冲区
+  private final int initBufferSize; // 缓冲区的大小
 
   public EditsDoubleBuffer(int defaultBufferSize) {
     initBufferSize = defaultBufferSize;
@@ -73,7 +80,7 @@ public class EditsDoubleBuffer {
   
   public void setReadyToFlush() {
     assert isFlushed() : "previous data not flushed yet";
-    TxnBuffer tmp = bufReady;
+    TxnBuffer tmp = bufReady;  //交换两个缓冲区
     bufReady = bufCurrent;
     bufCurrent = tmp;
   }
@@ -83,8 +90,8 @@ public class EditsDoubleBuffer {
    * and resets it. Does not swap any buffers.
    */
   public void flushTo(OutputStream out) throws IOException {
-    bufReady.writeTo(out); // write data to file
-    bufReady.reset(); // erase all data in the buffer
+    bufReady.writeTo(out); // write data to file  //将同步缓存中的数据写入文件
+    bufReady.reset(); // erase all data in the buffer  //将同步缓存中保存的数据清空
   }
   
   public boolean shouldForceSync() {
